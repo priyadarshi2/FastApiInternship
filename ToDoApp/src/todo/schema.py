@@ -30,3 +30,7 @@ class PaginatedTaskResponse(BaseModel):
     total_count: int
     page: int
     page_size: int
+
+# class TitleTaskSearchResponse(BaseModel):
+#     tasks: List[TaskResponse]
+

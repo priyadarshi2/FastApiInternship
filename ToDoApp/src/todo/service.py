@@ -28,8 +28,11 @@ def get_task_by_id(task_id, db):
 
 def get_all_tasks(db,offset,limit):
     # total = db.query(ItemModel).count()
-    tasks = db.query(UserTodo).offset(offset).limit(limit).all()
-    total_count = db.query(UserTodo).count()
+    total_task = db.query(UserTodo).filter()
+    tasks = total_task.offset(offset).limit(limit)
+    total_count = total_task.count()
+
+    # total_count = db.query(UserTodo).count()
     return tasks,total_count
 
 def task_update(db, task_id,task):
@@ -49,3 +52,11 @@ def task_delete(db, task_id):
         db.delete(db_task)
         db.commit()
     return db_task
+
+def search_in_title(db, text):
+    db_task = db.query(UserTodo).filter(UserTodo.title.icontains(text))
+    total_count = db_task.count()
+    if not db_task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    else :
+        return db_task,total_count

@@ -1,5 +1,7 @@
+from typing import List
 from pydantic import BaseModel
 from datetime import datetime
+from fastapi_pagination import Params as BaseParam
 
 class TaskBase(BaseModel):
     title: str
@@ -22,3 +24,9 @@ class TaskUpdate(BaseModel):
     email: str
     class Config:
         from_attributes = True
+
+class PaginatedTaskResponse(BaseModel):
+    tasks: List[TaskResponse]
+    total_count: int
+    page: int
+    page_size: int

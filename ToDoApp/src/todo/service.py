@@ -26,9 +26,11 @@ def get_task_by_id(task_id, db):
         raise HTTPException(status_code=404, detail="Task not found")
     return task
 
-def get_all_tasks(db):
-    tasks = db.query(UserTodo).all()
-    return tasks
+def get_all_tasks(db,offset,limit):
+    # total = db.query(ItemModel).count()
+    tasks = db.query(UserTodo).offset(offset).limit(limit).all()
+    total_count = db.query(UserTodo).count()
+    return tasks,total_count
 
 def task_update(db, task_id,task):
     db_task = db.query(UserTodo).filter(UserTodo.id == task_id).first() 

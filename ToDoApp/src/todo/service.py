@@ -68,7 +68,10 @@ def search_in_title(db, text):
         return db_task,total_count
 
 def get_user(db: Session, username: str):
-    return db.query(User).filter(User.username == username).first()
+    if username == "":
+        raise HTTPException(status_code=422, detail="Username Can't be empty")
+    else:
+        return db.query(User).filter(User.username == username).first()
 
 
 def authenticate_user(db, username, password):

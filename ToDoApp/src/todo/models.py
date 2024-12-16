@@ -11,5 +11,9 @@ class UserTodo(Base):
     time = Column(DateTime)
     email = Column(String(72))
 
-
-
+class User(Base):
+    __tablename__ = "User"
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String(72), unique=True, index=True)
+    hashed_password = Column(String(72))
+    is_active = Column(Boolean, default=True)

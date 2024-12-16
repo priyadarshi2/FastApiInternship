@@ -1,12 +1,14 @@
 from typing import List, Union
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
-from src.todo.models import UserTodo
-from src.todo.schema import PaginatedTaskResponse, TaskCreate, TaskResponse, TaskUpdate
-from src.todo.service import save_task, get_all_tasks, get_task_by_id, greet, task_update, task_delete, search_in_title
+from src.todo.models import UserTodo, User
+from src.todo.schema import PaginatedTaskResponse, TaskCreate, TaskResponse, TaskUpdate, Token, UserCreate, UserResponse, UserID
+from src.todo.service import save_task, get_all_tasks, get_task_by_id, greet, task_update, task_delete, search_in_title, authenticate_user, get_current_user, get_user
 from database import get_db
 from datetime import datetime
+from fastapi.security import OAuth2PasswordRequestForm
+from src.utils import create_access_token, get_password_hash
 
 router = APIRouter()
 
@@ -67,4 +69,31 @@ async def delete_task(task_id : int, db : Session = Depends(get_db)):
     return {"message":f"Task ID: {task_id} is deleted succesfully"}
 
 
+@router.get("/me", response_model=UserID)
+def read_users_me(current_user: UserID = Depends(get_current_user)):
+     return current_user
 
+@router.post("/token", response_model=Token)
+def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+     user = authenticate_user(db, form_data.username, form_data.password)
+     if not user:
+         raise HTTPException(
+             status_code=status.HTTP_401_UNAUTHORIZED,
+             detail="Incorrect username or password",
+             headers={"WWW-Authenticate": "Bearer"},
+         )
+     access_token = create_access_token(data={"sub": user.username})
+     return {"access_token": access_token, "token_type": "bearer"}
+
+@router.post("/signup", response_model=UserResponse)
+def signup(user: UserCreate, db: Session = Depends(get_db)):
+    db_user = get_user(db, username=user.username)
+    if db_user:
+        raise HTTPException(status_code=400, detail="Username already registered")
+    hashed_password = get_password_hash(user.password)
+    db_user = User(username=user.username, hashed_password=hashed_password)
+    print("============>")
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user

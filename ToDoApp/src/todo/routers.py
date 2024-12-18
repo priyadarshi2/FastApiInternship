@@ -3,17 +3,19 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 from src.todo.models import UserTodo, User
-from src.todo.schema import PaginatedTaskResponse, TaskCreate, TaskResponse, TaskUpdate, Token, UserCreate, UserResponse, UserID
+from src.todo.schema import PaginatedTaskResponse, TaskCreate, TaskResponse, TaskUpdate, Token, UserCreate, UserResponse, UserID, EmailSchema
 from database import get_db
 from datetime import datetime
 from fastapi.security import OAuth2PasswordRequestForm
 from src.utils import create_access_token, get_password_hash
 import src.todo.service as srv
+from src.email_config import conf
+from fastapi_mail import MessageSchema, FastMail
+from apscheduler.schedulers.background import BackgroundScheduler  # runs tasks in the background
+from apscheduler.triggers.cron import CronTrigger  # allows us to specify a recurring time for ex
+from database import SessionLocal
 
 router = APIRouter()
-
-#Create database tables
-#Base.metadata.create_all(bind=engine)
 
 @router.get("/")
 async def root():
@@ -148,3 +150,15 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_user)
     return db_user
+
+@router.post("/trigger/") 
+async def startup_event(): 
+    with SessionLocal() as session: 
+        tasks = session.query(UserTodo).all() 
+        for task in tasks: 
+            srv.schedule_task_email(task)
+
+@router.post("/send-email/")
+async def send_email_endpoint(email: EmailSchema, template: str): 
+    await srv.send_email(email.email, "Task Reminder", template) 
+    return {"message": "Email sent successfully"}

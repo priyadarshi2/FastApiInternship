@@ -9,6 +9,12 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from src.utils import SECRET_KEY, ALGORITHM
 from sqlalchemy import and_
+from datetime import datetime
+from fastapi_mail import MessageSchema
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.date import DateTrigger
+from src.email_config import fm
+import asyncio
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
@@ -172,3 +178,39 @@ def save_task_user(task, user_id : int, db : Session = Depends(get_db) ):
     db.commit()
     db.refresh(db_task)
     return db_task
+
+def current_time_greet():
+    print(f"Task is running at {datetime.now()}")
+
+async def send_email(to: str, subject: str, body: str):
+    message = MessageSchema(
+        subject=subject,
+        recipients=[to],
+        body=body,
+        subtype="html"
+    )
+    try: 
+        await fm.send_message(message) 
+        print(f"Email sent to {to} at {datetime.now()}") 
+    except Exception as e: # Log the error and raise an HTTPException 
+        print(f"Failed to send email: {e}") 
+        raise HTTPException(status_code=400, detail=f"Failed to send email: {e}")
+
+def schedule_task_email(task):
+
+    # Scheduler setup
+    scheduler = BackgroundScheduler()
+    scheduler.start()
+    # Calculate the time difference
+    task_time = task.time
+    current_time = datetime.now()
+    time_difference = task_time - current_time
+
+    # Ensure the task is scheduled in the future
+    if time_difference.total_seconds() > 0:
+        scheduler.add_job(send_email_wrapper, 
+                          DateTrigger(run_date=task_time),
+                          args=[task.email, "Task Reminder", task.description])
+
+def send_email_wrapper(to, subject, body): 
+    asyncio.run(send_email(to, subject, body))

@@ -1,8 +1,10 @@
 from src.todo.routers import router as user_router
 from src.todo.models import Base
 from database import engine
-
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.date import DateTrigger
 
 app = FastAPI()
 Base.metadata.create_all(bind=engine)
@@ -12,3 +14,4 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(app, host="127.0.0.1", port=8001)
+

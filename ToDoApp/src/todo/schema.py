@@ -1,5 +1,5 @@
 from typing import List
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from datetime import datetime
 from fastapi_pagination import Params as BaseParam
 
@@ -14,6 +14,7 @@ class TaskCreate(TaskBase):
 
 class TaskResponse(TaskBase):
     id:int
+    user_id:int
     class Config:
         from_attributes = True
 
@@ -56,3 +57,7 @@ class UserID(UserBase):
 
     class Config:
         from_attributes = True
+
+class EmailSchema(BaseModel):
+    email : List[EmailStr]
+    

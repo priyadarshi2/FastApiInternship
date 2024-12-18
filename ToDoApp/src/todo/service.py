@@ -4,22 +4,24 @@ from src.todo.schema import TaskCreate, TaskResponse, TokenData, UserID
 from sqlalchemy.orm import Session
 from fastapi.encoders import jsonable_encoder
 from src.utils import verify_password
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Header, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from src.utils import SECRET_KEY, ALGORITHM
+from sqlalchemy import and_
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 def greet():
     return {"message": "welcome to to do app"}
 
-def save_task(task,db):
+def save_task(task,db,curr_user_id):
     db_task = UserTodo(
         title=task.title,
         description=task.description,
         time=task.time,
-        email=task.email
+        email=task.email,
+        user_id = curr_user_id
     )
     db.add(db_task)
     db.commit()
@@ -52,8 +54,26 @@ def task_update(db, task_id,task):
     db.refresh(db_task) 
     return db_task
 
+def task_update_user(db, task_id,task, user_id):
+    db_task = db.query(UserTodo).filter(and_(UserTodo.id == task_id, UserTodo.user_id == user_id)).first() 
+    if db_task: 
+       db_task.title = task.title
+       db_task.description = task.description
+       db_task.time = task.time
+       db_task.email = task.email
+    db.commit() 
+    db.refresh(db_task) 
+    return db_task
+
 def task_delete(db, task_id):
     db_task = db.query(UserTodo).filter(UserTodo.id == task_id).first()
+    if db_task:
+        db.delete(db_task)
+        db.commit()
+    return db_task
+
+def task_delete_user(db, task_id, user_id):
+    db_task = db.query(UserTodo).filter(and_(UserTodo.id == task_id, UserTodo.user_id == user_id)).first()
     if db_task:
         db.delete(db_task)
         db.commit()
@@ -82,12 +102,36 @@ def authenticate_user(db, username, password):
         return False
     return user
 
-def get_current_user(token, db : Session = Depends(get_db)):
+# def get_current_user(token, db : Session = Depends(get_db)):
+#     credentials_exception = HTTPException(
+#         status_code=status.HTTP_401_UNAUTHORIZED,
+#         detail="Could not validate credentials",
+#         headers={"WWW-Authenticate": "Bearer"},
+#     )
+#     try:
+#         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+#         username: str = payload.get("sub")
+#         if username is None:
+#             raise credentials_exception
+#         token_data = TokenData(username=username)
+#     except JWTError:
+#         raise credentials_exception
+#     user = get_user(db, username=token_data.username)
+#     if user is None:
+#         raise credentials_exception
+#     return user
+def get_current_user(authorization: str = Header(None), db: Session = Depends(get_db)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    print("authoiration==>",authorization)
+    if not authorization:
+        raise credentials_exception
+    
+    token = authorization.split("Bearer ")[-1] if "Bearer " in authorization else authorization
+
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
@@ -96,7 +140,35 @@ def get_current_user(token, db : Session = Depends(get_db)):
         token_data = TokenData(username=username)
     except JWTError:
         raise credentials_exception
+    
     user = get_user(db, username=token_data.username)
     if user is None:
         raise credentials_exception
+    
     return user
+
+
+def tasks_by_user(user_id : int, offset, page_size,db : Session = Depends(get_db)):
+    if user_id == None:
+        raise HTTPException(status_code=422, detail="Username Can't be empty")
+    else:
+        user_tasks = db.query(UserTodo).filter(UserTodo.user_id == user_id)
+        tasks = user_tasks.offset(offset).limit(page_size)
+        total_count = user_tasks.count()
+    return tasks,total_count
+
+def is_user_active(user_id : int, db : Session = Depends(get_db)):
+    result = db.query(User.is_active).join(UserTodo).filter(and_(User.id == user_id, UserTodo.user_id == user_id)).first() 
+    return result
+
+def save_task_user(task, user_id : int, db : Session = Depends(get_db) ):
+    db_task = UserTodo(
+        title=task.title,
+        description=task.description,
+        time=task.time,
+        email=task.email,
+    )
+    db.add(db_task)
+    db.commit()
+    db.refresh(db_task)
+    return db_task

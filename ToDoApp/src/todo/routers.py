@@ -151,14 +151,8 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
     db.refresh(db_user)
     return db_user
 
-@router.post("/trigger/") 
-async def startup_event(): 
-    with SessionLocal() as session: 
-        tasks = session.query(UserTodo).all() 
-        for task in tasks: 
-            srv.schedule_task_email(task)
-
 @router.post("/send-email/")
 async def send_email_endpoint(email: EmailSchema, template: str): 
     await srv.send_email(email.email, "Task Reminder", template) 
     return {"message": "Email sent successfully"}
+

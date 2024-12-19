@@ -19,4 +19,5 @@ class UserTodo(Base):
     time = Column(DateTime)
     email = Column(String(72))
     user_id = Column(Integer, ForeignKey('User.id')) 
+    is_sent = Column(Boolean, default=False)
     # user = relationship("User", back_populates="todos")

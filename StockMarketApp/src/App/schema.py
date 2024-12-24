@@ -13,3 +13,10 @@ class DailyChangeResponse(StockData):
 
 class MovingAverageResponse(StockData):
     moving_average: List[dict]
+
+class PredictionBase(StockData):
+    prediction: list
+
+class VerdictBase(StockData):
+    toBuy : str
+

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Request
-from src.App.schema import StockDataResponse, DailyChangeResponse, MovingAverageResponse
+from src.App.schema import StockDataResponse, DailyChangeResponse, MovingAverageResponse, PredictionBase, VerdictBase
 import src.App.services as srv
 
 router = APIRouter()
@@ -38,4 +38,24 @@ async def show_moving_average(symbol : str, request : Request):
         raise HTTPException(status_code=406, detail="Wrong dates entry")
     else:
         return srv.get_moving_average(symbol, window, start_date, end_date)
-
+    
+@router.get("/predict/{symbol}", response_model=PredictionBase)
+async def show_predicted_value(symbol: str):
+    if symbol == None:
+        raise HTTPException(status_code=400, detail="Need a stock to predict")
+    else:
+        return srv.get_prediction(symbol)
+    
+@router.get("/verdict/{symbol}", response_model=VerdictBase)
+async def show_analysis(symbol : str):
+    if symbol == None:
+        raise HTTPException(status_code=400, detail="Need a stock to predict")
+    else:
+        return srv.get_verdict(symbol)
+    
+@router.get("/news/{symbol}", response_model=PredictionBase)
+async def show_news(symbol : str):
+    if symbol == None:
+        raise HTTPException(status_code=400, detail="Need a stock to predict")
+    else:
+        return srv.get_news(symbol)

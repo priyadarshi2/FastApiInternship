@@ -9,7 +9,7 @@ from src.utils import fetch_articles
 from src.transformer import predict_sentiment
 from src.amzn import amzn
 from src.googleai import gooogleAI
-from src.cache import write_json, load_json, extract_value, search_key
+from src.cache import append_json, extract_value, search_key
 
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -116,5 +116,5 @@ def get_verdict(symb : str):
         news = fetch_articles(symb)
         result = gooogleAI(symb, news)
         answer = {symb : result}
-        write_json(answer)
+        append_json(answer)
     return {"symbol" : symb, "toBuy" : result}

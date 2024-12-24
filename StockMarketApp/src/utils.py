@@ -1,10 +1,14 @@
 import requests
 from fastapi import HTTPException
 from bs4 import BeautifulSoup
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def get_articles(symb : str):
     # Your API Key
-    API_KEY = "4c30eab85fe84820866ade873c97448d"
+    API_KEY = os.getenv("NEWS_API_KEY")
 
     # News API endpoint for searching articles
     BASE_URL = "https://newsapi.org/v2/everything"

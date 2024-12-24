@@ -1,10 +1,10 @@
 # Stock Analysis App in FastAPI
 
-This is a basic stock reading and analytics program written in FastAPI. It can read stock data from a certain time range of any stock and can give his own opinion on that stock.
+This is a foundational stock analysis program built using FastAPI. It reads stock data within a specified time range for any given stock and provides analytical insights and opinions based on that data.
 
 ## Description
 
-The program can work with six get requests, which can show stock data, daily change, moving average for a specific window and shows news articles, predict the stock price for tomorrow, present his own view on stock purchase 
+The program supports six GET requests, enabling users to view stock data, daily changes, moving averages for specific windows, relevant news articles, predicted stock prices for the next day, and the program's own recommendations on stock purchases.The program leverages Google's Gemini API to obtain text-based feedback on stocks and utilizes NewsAPI to retrieve relevant articles about the queried stock
 
 
 ## Program Structure
@@ -55,7 +55,7 @@ pip install FastAPI
 
 - Install [Postman](https://www.postman.com/downloads/) 
 - Get your own [Google Gemini API Key](https://ai.google.dev/gemini-api/docs?gad_source=1&gclid=Cj0KCQiAsaS7BhDPARIsAAX5cSByQW_erb7hXf47PIpeGhmwwASiLEkhNLsPtIhrNL8Bx9P-PmubwBIaAubZEALw_wcB) and [NewsAPI Key](https://newsapi.ai/?gad_source=1&gclid=Cj0KCQiAsaS7BhDPARIsAAX5cSDXiE1E9O-FczVsYtXvu8gRVkZ5d0IzrTGN0xOPqA74eLSuIQI4ot4aAonREALw_wcB)
-- Store the aboce keys in the .env file
+- Store the above keys in the .env file to the root folder
 - In the directory for StockMarketApp type into the bash:
 ```bash
 uvicorn main:app

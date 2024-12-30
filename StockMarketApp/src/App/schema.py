@@ -20,3 +20,6 @@ class PredictionBase(StockData):
 class VerdictBase(StockData):
     toBuy : str
 
+class MetricsModel(StockData):
+    Metrics : dict
+

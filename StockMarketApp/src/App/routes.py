@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Request
-from src.App.schema import StockDataResponse, DailyChangeResponse, MovingAverageResponse, PredictionBase, VerdictBase
+from src.App.schema import StockDataResponse, DailyChangeResponse, MovingAverageResponse
+from src.App.schema import PredictionBase, VerdictBase, MetricsModel
 import src.App.services as srv
 
 router = APIRouter()
@@ -17,7 +18,7 @@ async def show_stock_data(symbol : str,  request : Request):
 
 @router.get("/daily_change/{symbol}", response_model=DailyChangeResponse)
 async def show_daily_change(symbol : str, request : Request):
-    """fjhghjgkhhkj"""
+ 
     start_date = request.query_params.get('start_date',"")
     end_date = request.query_params.get('end_date',"")
     if not symbol or not start_date or not end_date:
@@ -59,3 +60,14 @@ async def show_news(symbol : str):
         raise HTTPException(status_code=400, detail="Need a stock to predict")
     else:
         return srv.get_news(symbol)
+    
+@router.get("/backtest/{symbol}", response_model=MetricsModel)
+async def show_backtest(symbol : str, request : Request):
+    start_date = request.query_params.get('start_date',"")
+    end_date = request.query_params.get('end_date',"")
+    if not symbol or not start_date or not end_date:
+        raise HTTPException(status_code=400, detail="Insufficient data")
+    if start_date > end_date:
+        raise HTTPException(status_code=406, detail="Wrong dates entry")
+    else:
+        return srv.get_backtest(symbol, start_date, end_date)

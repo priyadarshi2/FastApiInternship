@@ -9,7 +9,8 @@ import numpy as np
 import talib as ta
 import backtrader as bt 
 
-from src.indicators import CustomTALibStrategy
+from src.strategy.common_strategy import Strategy_Key
+from src.strategy.custom_strategy import CustomTALibStrategy, strats
 
 load_dotenv()
 
@@ -72,12 +73,12 @@ def fetch_articles(symb : str):
         raise HTTPException(status_code=200, detail="Information not available")
     
 
-def backtest(data):
+def backtest(data, key):
 
     data_feed = bt.feeds.PandasData(dataname=data)
     cerebro = bt.Cerebro()
     cerebro.adddata(data_feed)
-    cerebro.addstrategy(CustomTALibStrategy)
+    cerebro.addstrategy(Strategy_Key[key])
     cerebro.broker.set_cash(100000)
     cerebro.broker.setcommission(commission=0.001)
     # Run the backtest
@@ -90,7 +91,31 @@ def backtest(data):
     results = {
         'starting_cash': strategy.starting_cash,
         'ending_cash': strategy.ending_cash,
-        'profit': strategy.ending_cash - strategy.starting_cash,
+        'profit': strategy.profit,
+        'profir_percentage': strategy.profit_perc,
+        'trades': strategy.trades
+    }
+    return results
+
+def custom_backtest(data, keys):
+    data_feed = bt.feeds.PandasData(dataname=data)
+    cerebro = bt.Cerebro()
+    cerebro.adddata(data_feed)
+    cerebro.addstrategy(CustomTALibStrategy,key_list=keys)
+    cerebro.broker.set_cash(100000)
+    cerebro.broker.setcommission(commission=0.001)
+    # Run the backtest
+    print("Running the backtest...")
+
+    backtest_result = cerebro.run()
+    print("Backtest completed.")
+    print(f"Ending Cash: {cerebro.broker.getcash()}")
+    strategy = backtest_result[0]
+    results = {
+        'starting_cash': strategy.starting_cash,
+        'ending_cash': strategy.ending_cash,
+        'profit': strategy.profit,
+        'profir_percentage': strategy.profit_perc,
         'trades': strategy.trades
     }
     return results

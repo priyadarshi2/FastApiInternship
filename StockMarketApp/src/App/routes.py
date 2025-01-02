@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Request
 from src.App.schema import StockDataResponse, DailyChangeResponse, MovingAverageResponse
-from src.App.schema import PredictionBase, VerdictBase, MetricsModel
+from src.App.schema import PredictionBase, VerdictBase, MetricsModel, StrategyList, CustomMetrics
 import src.App.services as srv
 
 router = APIRouter()
@@ -65,9 +65,33 @@ async def show_news(symbol : str):
 async def show_backtest(symbol : str, request : Request):
     start_date = request.query_params.get('start_date',"")
     end_date = request.query_params.get('end_date',"")
+    key = int(request.query_params.get("key",1))
     if not symbol or not start_date or not end_date:
         raise HTTPException(status_code=400, detail="Insufficient data")
     if start_date > end_date:
         raise HTTPException(status_code=406, detail="Wrong dates entry")
+    if key > 3 or key <= 0:
+        raise HTTPException(status_code=406, detail="Wrong Key")
     else:
-        return srv.get_backtest(symbol, start_date, end_date)
+        return srv.get_backtest(symbol, start_date, end_date, key)
+    
+@router.get("/strategies", response_model=StrategyList)
+async def show_strategies():
+    return srv.get_strategies()
+
+@router.get("/custom-backtest/{symbol}", response_model=MetricsModel)
+async def show_custom_backtest(symbol : str, request : Request):
+    start_date = request.query_params.get('start_date',"")
+    end_date = request.query_params.get('end_date',"")
+    key = request.query_params.get("keys","")
+    if not symbol or not start_date or not end_date:
+        raise HTTPException(status_code=400, detail="Insufficient data")
+    if start_date > end_date:
+        raise HTTPException(status_code=406, detail="Wrong dates entry")
+    if not srv.is_binary_string(key):
+        raise HTTPException(status_code=400, detail="Invalid binary string")
+    else:
+        return srv.get_custom_backtest(symbol, start_date, end_date, key)
+    
+
+@router.get("/"

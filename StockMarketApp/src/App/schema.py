@@ -21,5 +21,15 @@ class VerdictBase(StockData):
     toBuy : str
 
 class MetricsModel(StockData):
+    start_date : str
+    end_date : str
     Metrics : dict
 
+class CustomMetrics(StockData):
+    start_date : str
+    end_date : str
+    strats : dict
+    Metrics : dict
+
+class StrategyList(BaseModel):
+    data : dict

@@ -5,12 +5,12 @@ import matplotlib.pyplot as plt
 from dateutil.relativedelta import relativedelta
 from datetime import datetime 
 import datetime as dt
-from src.utils import fetch_articles, backtest
+from src.utils import fetch_articles, backtest, custom_backtest
 from src.amzn import amzn
 from src.googleai import gooogleAI
 from src.cache import append_json, extract_value, search_key
-
-
+from src.strategy.common_strategy import Strategy_Key
+from src.strategy.custom_strategy import strats
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestRegressor
@@ -18,6 +18,14 @@ from sklearn.metrics import mean_squared_error
 
 def string_to_time(text  : str):
     return datetime.strptime(text, "%Y-%m-%d")
+
+def extract_positions(binary_num):
+    # Find the positions of '1's
+    positions = [idx for idx, bit in enumerate(binary_num) if bit == '1']
+    return positions
+
+def is_binary_string(s: str) -> bool:
+    return all(char in '01' for char in s)
 
 def get_data(symb: str, start_date : str, end_date : str):
     start_date = string_to_time(start_date)
@@ -92,22 +100,6 @@ def get_news(symb : str):
     news = fetch_articles(symb)
     return {"symbol" : symb, "prediction" : news}
 
-# def make_decision(articles):
-#     positive_count = 0
-#     negative_count = 0
-
-#     for article in articles:
-#         sentiment = predict_sentiment(article)
-#         if sentiment == 2:  # Positive sentiment
-#             positive_count += 1
-#         elif sentiment == 0:  # Negative sentiment
-#             negative_count += 1
-
-#     # Decision based on aggregate sentiment
-#     if positive_count > negative_count:
-#         return "Buy It"
-#     else:
-#         return "Don't buy it"
     
 def get_verdict(symb : str):
     if search_key(symb):
@@ -119,10 +111,33 @@ def get_verdict(symb : str):
         append_json(answer)
     return {"symbol" : symb, "toBuy" : result}
 
-def get_backtest(symb : str, start_date : str, end_date : str):
+def get_backtest(symb : str, start_date : str, end_date : str, key : int):
     stock = yf.Ticker(symb)
     data = stock.history(start=start_date, end=end_date)
+
     print(type(data.index))
     print(data.head(20))
-    result = backtest(data)
-    return {"symbol" : symb, "Metrics" : result} 
+    print("======first=====",data.head(1))
+    print("======last======",data.tail(1))
+    result = backtest(data, key)
+    return {"symbol" : symb, "start_date" : start_date, "end_date" : end_date, "Metrics" : result} 
+
+def get_strategies():
+    str_dct = {}
+    for key, class_obj in Strategy_Key.items():
+        str_dct[key] = class_obj.__name__
+    return {"data" : str_dct}
+
+def get_custom_backtest(symb : str, start_date : str, end_date : str, key : str):
+    stock = yf.Ticker(symb)
+    data = stock.history(start=start_date, end=end_date)
+    keys = extract_positions(key)
+    print(type(data.index))
+    print(data.head(20))
+    print("======first=====",data.head(1))
+    print("======last======",data.tail(1))
+    result = custom_backtest(data, keys)
+    return {"symbol" : symb, "start_date" : start_date, "end_date" : end_date, "Metrics" : result}
+
+def get_custom_strategies():
+    return {"data" : strats}
